@@ -12,6 +12,8 @@ from numpy import array
 import seabreeze.spectrometers as sb
 import time
 
+#TODO type hinting
+
 class USB2000():
 
     def __init__(self, verbose=True, display=False):
@@ -104,7 +106,7 @@ class USB2000():
 
         return config
     
-    def set_int_time(self, int_time=1):
+    def set_int_time(self, int_time=1000):
         '''
         Set the integration time of the spectrometer
         
@@ -112,19 +114,20 @@ class USB2000():
             Integration time in us
         
         '''
+        if int_time < 1000:
+            print('Lower integration time limit of 1ms reached.')
+            int_time = 1000
         self.int_time = int_time
         self.spectrometer.integration_time_micros(self.int_time)
         time.sleep(0.1)
         if self.verbose:
-            save_verbose = self.verbose
-            self.verbose = False
             set_time = self.get_config()['Integration time']
             print(f'Integration time set to {set_time} us')
-            self.verbose = save_verbose
         
     def take_spectra(self):
         '''
         Record the current spectra
+        #TODO add dark count correction
         
         '''
         try:
@@ -138,7 +141,7 @@ class USB2000():
         except Exception as e:
             print(f"Error collecting data: {e}")
 
-    def take_average(self, n_samples=2):
+    def take_average(self, n_samples=10):
         '''
         Record an average of spectra
         
@@ -146,7 +149,6 @@ class USB2000():
             number of averages to take
             
         '''
-        #TO DO check need for array 
         try:
             # prevent print out for each spectra
             save_verbose = self.verbose
@@ -157,7 +159,7 @@ class USB2000():
             for _ in range(n_samples):
                 temp += self.take_spectra()
             # create averaged array
-            averaged = array(temp/n_samples)
+            averaged = temp/n_samples
             stop = time.time()          # end time
             # reset verbose
             self.verbose = save_verbose
